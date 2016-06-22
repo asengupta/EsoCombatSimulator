@@ -16,8 +16,10 @@ var CombatEvent = function(base, abilityName) {
   };
 };
 
-var Event = function(name) {
-
+var BuffEvent = function(abilityName, effect) {
+  this.abilityName = abilityName;
+  var self = this;
+  this.effects = effect;
 };
 
 var f = function(v) { return function() { return v; } };
@@ -25,6 +27,7 @@ var doubler = function(f) { return f()*2; }
 var tripler = function(f) { return f()*3; }
 var quadrupler = function(f) { return f()*4; }
 var dmgPipeline = new CombatEvent(f(20), "Venomous Claw");
+var empower = new BuffEvent("Empower");
 // dmgPipeline.addModifier(doubler, "Doubler").addModifier(tripler, "Tripler").addModifier(quadrupler, "4x");
 
 // console.log(dmgPipeline.valueAt("Doubler")());
@@ -39,20 +42,24 @@ var decoratedPipeline = function(basePipeline, factor) {
   return dotPipeline;
 };
 
-var statsModel = new Model() {
-  var he
-};
-
 var Timeline = function() {
   var self = this;
   var observerTriggers = {};
   var currentTime = 0.0;
   var timeStep = 0.2;
 
+  this.rangedEffect = function(ev, from, to) {
+    var current = from.time;
+    while (current <= to.time) {
+      if (!observerTriggers[current]) observerTriggers[current] = [];
+      observerTriggers[current].push(ev);
+      current += timeStep;
+    }
+  };
+
   this.runTo = function(endTime) {
     currentTime = 0.0;
     while (currentTime <= endTime) {
-
       _.each(observerTriggers[currentTime], function(trigger) {
         console.log("[" + currentTime + "] Damage from " + trigger.abilityName + " was " + trigger.finalValue());
       });
@@ -95,5 +102,5 @@ var ctr = new TimeCounter(instant);
 timeline.at(ctr.now()).effect(dmgPipeline)
         .at(ctr.advance(0.4).now()).effect(decoratedPipeline(dmgPipeline, 1))
         .at(ctr.advance(0.4).now()).effect(decoratedPipeline(dmgPipeline, 2));
-
+timeline.rangedEffect(empower, new Instant(0.0), new Instant(3.0));
 timeline.runTo(3.0);

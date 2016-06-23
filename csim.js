@@ -60,8 +60,15 @@ var Timeline = function() {
   this.runTo = function(endTime) {
     currentTime = 0.0;
     while (currentTime <= endTime) {
-      _.each(observerTriggers[currentTime], function(trigger) {
-        console.log("[" + currentTime + "] Damage from " + trigger.abilityName + " was " + trigger.finalValue());
+      var effects = observerTriggers[currentTime];
+      var buffs = _.filter(effects, function(e) { return e instanceof BuffEvent; });
+      var abilities = _.filter(effects, function(e) { return e instanceof CombatEvent; });
+
+      
+      console.log(buffs);
+      console.log(abilities);
+      _.each(effects, function(trigger) {
+        console.log("[" + currentTime + "] Damage from " + trigger.abilityName + " was " + trigger.abilityName);
       });
       currentTime += timeStep;
     }
@@ -102,5 +109,5 @@ var ctr = new TimeCounter(instant);
 timeline.at(ctr.now()).effect(dmgPipeline)
         .at(ctr.advance(0.4).now()).effect(decoratedPipeline(dmgPipeline, 1))
         .at(ctr.advance(0.4).now()).effect(decoratedPipeline(dmgPipeline, 2));
-timeline.rangedEffect(empower, new Instant(0.0), new Instant(3.0));
+timeline.rangedEffect(empower, new Instant(0.4), new Instant(3.0));
 timeline.runTo(3.0);
